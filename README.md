@@ -8,7 +8,7 @@
 
 ## 🎵 Overview
 
-**Musica Universalis** (formerly Phonation Music Player) is a beautifully crafted, feature-rich desktop music application built with Electron. Designed for audio enthusiasts, it seamlessy bridges the gap between your local, high-fidelity audio library and modern streaming services, all while integrating flawlessly with the Sonos ecosystem.
+**Musica Universalis** is a feature-rich desktop music application built with Electron. Designed for audio enthusiasts, it seamlessy bridges the gap between your local, high-fidelity audio library and modern streaming services, all while integrating flawlessly with the Sonos ecosystem.
 
 With a focus on stunning aesthetics, dynamic performance, and deep device integration, Musica Universalis transforms how you experience your music on the desktop.
 
