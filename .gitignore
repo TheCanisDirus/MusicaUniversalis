@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.DS_Store
+*.log
+
+# Scripts and Backups
+*.ps1
+*.zip
+*.py
+*.mjs
+Backups/

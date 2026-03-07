@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Content Security Policy for this renderer page.
+       - default-src 'self': blocks unexpected resource loads by default
+       - script-src 'self': only our own app.js can run
+       - style-src + fonts: allows Google Fonts stylesheet & font files
+       - media-src blob: data:: allows local audio playback via Blob URLs
+       - img-src data:: allows base64-encoded album art
+       - connect-src ws: wss:: allows WebSocket to the local ffmpeg stream server
+  -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; media-src 'self' blob: data:; img-src 'self' data: blob:; connect-src 'self' ws: wss:;">
+  <title>Musica Universalis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Custom Title Bar -->
+  <div id="custom-titlebar">
+    <div class="titlebar-accent-line"></div>
+    <div class="titlebar-body">
+      <div class="titlebar-left">
+        <span class="titlebar-title">Musica Universalis</span>
+      </div>
+      <div class="titlebar-controls">
+        <button id="titlebar-min" class="titlebar-btn" title="Minimize">
+          <svg viewBox="0 0 10 1" width="10" height="1">
+            <rect width="10" height="1" fill="currentColor" />
+          </svg>
+        </button>
+        <button id="titlebar-max" class="titlebar-btn" title="Maximize">
+          <svg viewBox="0 0 10 10" width="10" height="10">
+            <rect x="0.5" y="0.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1" />
+          </svg>
+        </button>
+        <button id="titlebar-close" class="titlebar-btn titlebar-btn-close" title="Close">
+          <svg viewBox="0 0 10 10" width="10" height="10">
+            <line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1.2" />
+            <line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1.2" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-container">
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+      <div class="brand">
+        <img src="assets/icon_clean.png" alt="Musica Universalis Logo" class="brand-icon">
+        <h1>Musica Universalis</h1>
+      </div>
+      <div class="sidebar-section-title">Library & Services</div>
+      <ul class="nav-links" id="main-nav-list">
+        <li class="active" id="nav-local" style="margin-bottom: 0px; border-bottom: none;">Local Library</li>
+        <div id="local-stats-drawer" class="stats-drawer">
+          <div class="stats-grid">
+            <div class="stat-item"><span id="stat-tracks">0</span><label>Tracks</label></div>
+            <div class="stat-item"><span id="stat-albums">0</span><label>Albums</label></div>
+            <div class="stat-item"><span id="stat-artists">0</span><label>Artists</label></div>
+          </div>
+          <div class="stats-actions">
+            <button id="quick-scan-btn" class="glass-btn primary small" style="flex: 1; padding: 4px;">Quick
+              Scan</button>
+            <button id="deep-scan-btn" class="glass-btn secondary small" style="flex: 1; padding: 4px;">Deep
+              Scan</button>
+          </div>
+        </div>
+        <!-- Dynamic profiles injected here via app.js -->
+        <li><button id="add-profile-btn" class="add-profile-btn">+ Add Service</button></li>
+      </ul>
+
+      <div class="sidebar-section-title" style="margin-top: 20px;">Playlists</div>
+      <ul class="nav-links" id="playlist-nav-list">
+        <!-- Playlists injected here via app.js -->
+        <li><button id="add-playlist-btn" class="add-profile-btn">+ New Playlist</button></li>
+      </ul>
+
+      <div class="output-selector">
+        <label for="device-select">Output Device</label>
+        <select id="device-select">
+          <option value="local">Local Speakers</option>
+          <option value="manual_sonos">Manual Sonos IP...</option>
+          <!-- Sonos devices injected here -->
+        </select>
+        <input type="text" id="manual-sonos-ip" placeholder="e.g. 192.168.1.50"
+          style="display: none; margin-top: 5px; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: white;" />
+      </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+      <!-- Local Library View -->
+      <section id="view-local" class="view active-view">
+        <div class="library-top-bar">
+          <input type="text" id="library-search" placeholder="Search Title, Artist, or Album..." class="search-input" />
+          <div class="header-actions" style="position: relative;">
+            <div id="scan-progress-overlay" class="scan-status-overlay" style="display: none;">
+              <div class="scan-spinner"></div>
+              <span id="scan-progress-text">Scanning metadata... (0)</span>
+            </div>
+
+            <button id="settings-btn" class="glass-btn secondary" style="margin-right: auto;" title="Settings">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"
+                class="theme-icon">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                </path>
+              </svg>
+            </button>
+            <button id="add-dir-btn" class="glass-btn primary">Set Library Path</button>
+            <button id="clear-pl-btn" class="glass-btn secondary">Clear Library</button>
+          </div>
+        </div>
+
+        <div class="library-panes-container">
+
+          <div class="library-top-panes">
+            <!-- Artist Pane -->
+            <div class="library-pane">
+              <div class="library-header pane-header">
+                <div class="col col-artist-name">Artist</div>
+                <div class="col col-count">Tracks</div>
+              </div>
+              <div class="playlist-container">
+                <ul id="artist-list" class="playlist library-body filter-list">
+                  <li class="playlist-item active">All Artists</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Album Pane -->
+            <div class="library-pane">
+              <div class="library-header pane-header">
+                <div class="col col-album-name">Album</div>
+                <div class="col col-count">Tracks</div>
+              </div>
+              <div class="playlist-container">
+                <ul id="album-list" class="playlist library-body filter-list">
+                  <li class="playlist-item active">All Albums</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Pane: Track Grid -->
+          <div class="library-grid-container library-bottom-pane">
+            <div class="library-header track-header">
+              <div class="col col-track" id="track-sort-btn" style="cursor: pointer;" title="Sort by Track Number">Track
+                ↓</div>
+              <div class="col col-title">Title</div>
+              <div class="col col-artist">Artist</div>
+              <div class="col col-album">Album</div>
+              <div class="col col-time">Time</div>
+            </div>
+            <div class="playlist-container">
+              <ul id="playlist" class="playlist library-body">
+                <li class="empty-state">No music loaded. Set a Library Path to begin.</li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Dynamic YouTube Views Container -->
+      <div id="dynamic-views-container" style="width: 100%; height: 100%;">
+        <!-- Webviews injected via JS -->
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Global Player Bar (always visible for local play, maybe hidden for YT) -->
+  <div class="player-bar glass-panel" id="local-player-bar">
+    <div class="track-info">
+      <div class="album-art-placeholder">
+        <img id="album-art-img" src=""
+          style="display: none; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; z-index: 2; position: relative;"
+          alt="" />
+      </div>
+      <div class="track-details">
+        <h3 id="track-name">No Track Loaded</h3>
+        <p class="time-display"><span id="time-current">0:00</span> / <span id="time-total">0:00</span></p>
+      </div>
+    </div>
+
+    <div class="player-controls">
+      <div class="buttons">
+        <button id="prev-btn" class="ctrl-btn">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="19 20 9 12 19 4 19 20"></polygon>
+            <line x1="5" y1="19" x2="5" y2="5"></line>
+          </svg>
+        </button>
+        <button id="play-pause-btn" class="ctrl-btn play-btn">
+          <svg id="icon-play" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2"
+            fill="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <svg id="icon-pause" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2"
+            fill="currentColor" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+        </button>
+        <button id="next-btn" class="ctrl-btn">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 4 15 12 5 20 5 4"></polygon>
+            <line x1="19" y1="5" x2="19" y2="19"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="progress-container">
+        <input type="range" id="seek-bar" class="slider" value="0" min="0" max="100" step="0.1">
+      </div>
+    </div>
+
+    <div class="volume-control">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"
+        stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+      </svg>
+      <input type="range" id="volume-bar" class="slider vol-slider" value="100" min="0" max="100" step="1">
+    </div>
+
+    <!-- Now Playing Queue Button -->
+    <button id="queue-btn" class="ctrl-btn queue-open-btn" title="Now Playing Queue">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"
+        stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <circle cx="3" cy="6" r="1" fill="currentColor"></circle>
+        <circle cx="3" cy="12" r="1" fill="currentColor"></circle>
+        <circle cx="3" cy="18" r="1" fill="currentColor"></circle>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Now Playing Queue Panel and Overlay -->
+  <div id="queue-overlay" class="settings-overlay"></div>
+  <div id="queue-panel" class="glass-panel">
+    <div class="queue-header">
+      <h2>Now Playing</h2>
+      <button id="close-queue-btn" class="glass-btn secondary" title="Close">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <ul id="queue-track-list" class="queue-track-list"></ul>
+    <div class="queue-footer">
+      <input id="queue-save-name" class="glass-input" type="text" placeholder="Playlist name…">
+      <button id="queue-save-btn" class="glass-btn">Save as Playlist</button>
+    </div>
+  </div>
+
+  <!-- Settings Sidebar and Overlay -->
+  <div id="settings-overlay" class="settings-overlay"></div>
+  <div id="settings-sidebar" class="settings-sidebar glass-panel">
+    <div class="settings-header">
+      <h2>Settings</h2>
+      <button id="close-settings-btn" class="glass-btn secondary" title="Close Settings">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="settings-content">
+      <div class="settings-group">
+        <label for="theme-select">Theme</label>
+        <select id="theme-select" class="glass-input">
+          <option value="dark">Dark Mode</option>
+          <option value="light">Light Mode</option>
+          <option value="volcanic">Volcanic</option>
+        </select>
+      </div>
+      <div class="settings-group">
+        <label for="scale-slider" style="display: flex; justify-content: space-between;">
+          Interface Scale <span id="scale-value" style="color: var(--text-primary); font-weight: 500;">100%</span>
+        </label>
+        <input type="range" id="scale-slider" class="slider" value="100" min="50" max="200" step="5"
+          style="margin-top: 5px;">
+      </div>
+      <div class="settings-about">
+        <div class="settings-about-name">Musica Universalis</div>
+        <div class="settings-about-version" id="app-version-label">v—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Context Menu for Service Profiles -->
+  <div id="profile-context-menu" class="context-menu" style="display: none;">
+    <div class="context-menu-item" id="context-rename">Rename Service</div>
+    <div class="context-menu-item delete" id="context-delete">Delete Service</div>
+  </div>
+
+  <!-- Custom Context Menu for Tracks -->
+  <div id="track-context-menu" class="context-menu" style="display: none;">
+    <!-- Playlist sub-items injected dynamically -->
+  </div>
+
+  <!-- Custom Context Menu for Playlists (Sidebar) -->
+  <div id="playlist-context-menu" class="context-menu" style="display: none;">
+    <div class="context-menu-item" id="pl-context-rename">Rename Playlist</div>
+    <div class="context-menu-item delete" id="pl-context-delete">Delete Playlist</div>
+  </div>
+
+  <!-- Custom Confirm Modal -->
+  <div id="custom-confirm-overlay" class="settings-overlay custom-modal-overlay"></div>
+  <div id="custom-confirm-modal" class="glass-panel custom-modal">
+    <div class="custom-modal-message" id="custom-confirm-message">Are you sure?</div>
+    <div class="custom-modal-actions">
+      <button id="custom-confirm-cancel" class="glass-btn secondary">Cancel</button>
+      <button id="custom-confirm-ok" class="glass-btn danger">Delete</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
