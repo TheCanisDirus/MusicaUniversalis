@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] - 2026-03-07
+
+### Fixed
+- Fixed an issue where the production (.exe) build crashed when attempting to stream YouTube Music to Sonos. The bundled `ffmpeg-static` library was trapped inside the `app.asar` archive, breaking the Node.js `spawn` command.
+
 ## [1.0.2] - 2026-03-07
 
 ### Fixed

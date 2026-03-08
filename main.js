@@ -136,7 +136,11 @@ function startLocalServer() {
   const { WebSocketServer } = require('ws');
   const { PassThrough } = require('stream');
   const ffmpeg = require('fluent-ffmpeg');
-  const ffmpegPath = require('ffmpeg-static');
+  let ffmpegPath = require('ffmpeg-static');
+
+  if (ffmpegPath.includes('app.asar')) {
+    ffmpegPath = ffmpegPath.replace('app.asar', 'app.asar.unpacked');
+  }
 
   ffmpeg.setFfmpegPath(ffmpegPath);
 
