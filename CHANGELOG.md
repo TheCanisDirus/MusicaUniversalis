@@ -8,10 +8,13 @@ All notable changes to this project will be documented in this file.
 - Fixed an issue where casting YouTube Music streams to Sonos would fail with an "encoding error" due to Sonos blocking chunked HTTP transfers, by forcing the connection to use the `x-rincon-mp3radio://` protocol.
 - Forced `Express` to immediately flush 200 OK headers for live streams to prevent the backend from triggering the new 5-second `play()` timeout.
 
+### Enhancement?
+- As a side effect of switching over to `x-rincon-mp3radio://` the delay has dropped between starting music on YouTube Music and hearing it through the speaker. 
+
 ## [1.0.1] - 2026-03-07
 
 ### Added
-- Created a beautiful new `customAlert` modal to replace standard browser/OS alert boxes.
+- Created a new `customAlert` modal to replace standard browser/OS alert boxes.
 
 ### Fixed
 - Fixed an issue where "Manual Sonos IP" background polling would continuously spam the user with an "Invalid IP" alert window.
