@@ -420,7 +420,7 @@ volumeBar.addEventListener('wheel', (e) => {
 
 function togglePlayPause() {
     if (activeTrackList.length === 0) return;
-    const selectedDevice = getActualSelectedDevice();
+    const selectedDevice = getActualSelectedDevice(false);
 
     if (selectedDevice === 'local') {
         if (audio.paused) {
@@ -486,7 +486,7 @@ async function loadTrack(index) {
         if (selectedDevice === 'manual_sonos') {
             const manualIp = document.getElementById('manual-sonos-ip').value.trim();
             if (!manualIp) {
-                alert("Please enter a valid Sonos IP address.");
+                customAlert("Please enter a valid Sonos IP address.");
                 return;
             }
             selectedDevice = manualIp;
@@ -498,7 +498,7 @@ async function loadTrack(index) {
                 .then(res => {
                     if (!res.success) {
                         console.error("Sonos error:", res.error);
-                        alert("Failed to play on Sonos: " + res.error);
+                        customAlert("Failed to play on Sonos: " + res.error);
                     } else {
                         isSonosPlaying = true;
                         setPlayPauseUI(true);
@@ -527,12 +527,12 @@ if (window.electronAPI && window.electronAPI.onSonosDevices) {
     });
 }
 
-function getActualSelectedDevice() {
+function getActualSelectedDevice(suppressAlert = false) {
     let selectedDevice = deviceSelect.value;
     if (selectedDevice === 'manual_sonos') {
         const manualIp = document.getElementById('manual-sonos-ip').value.trim();
         if (!manualIp) {
-            alert("Please enter a valid Sonos IP address.");
+            if (!suppressAlert) customAlert("Please enter a valid Sonos IP address.");
             return null;
         }
         selectedDevice = manualIp;
@@ -549,7 +549,7 @@ deviceSelect.addEventListener('change', () => {
         manualIpInput.style.display = 'none';
     }
 
-    const selectedDevice = getActualSelectedDevice();
+    const selectedDevice = getActualSelectedDevice(true);
     if (!selectedDevice) return;
 
     if (selectedDevice !== 'local' && window.electronAPI && window.electronAPI.getSonosState) {
@@ -597,7 +597,7 @@ deviceSelect.addEventListener('change', () => {
                 .then(res => {
                     if (!res.success) {
                         console.error('Sonos YT error:', res.error);
-                        alert("Failed to stream YouTube to Sonos: " + res.error);
+                        customAlert("Failed to stream YouTube to Sonos: " + res.error);
                     } else {
                         isSonosPlaying = true;
                         setPlayPauseUI(true);
@@ -650,7 +650,7 @@ addDirBtn.addEventListener('click', async () => {
                 renderAlbumPane();
                 renderPlaylist(searchInput.value);
             } else {
-                alert("No audio files found or directory unreadable.");
+                customAlert("No audio files found or directory unreadable.");
                 renderPlaylist(searchInput.value);
             }
         }
@@ -1162,7 +1162,7 @@ function createYoutubeWebview(profile) {
             console.error(`Failed to inject into [${profile.name}]:`, e);
         });
 
-        const currentDevice = getActualSelectedDevice();
+        const currentDevice = getActualSelectedDevice(true);
         const mode = (currentDevice && currentDevice !== 'local') ? 'sonos' : 'local';
         webview.executeJavaScript(`if(window.setYtOutput) window.setYtOutput("${mode}"); undefined;`);
     });
@@ -1243,7 +1243,7 @@ function renderProfiles() {
             }
 
             // Direct Sonos flow dynamically to this specific webview
-            const selectedDevice = getActualSelectedDevice();
+            const selectedDevice = getActualSelectedDevice(false);
             if (selectedDevice && selectedDevice !== 'local') {
                 if (window.electronAPI) {
                     window.electronAPI.playYtOnSonos(selectedDevice).catch(err => console.error(err));
@@ -1531,7 +1531,7 @@ function timeStringToSeconds(timeStr) {
 
 if (window.electronAPI && window.electronAPI.onSonosProgress) {
     window.electronAPI.onSonosProgress((event, data) => {
-        const selectedDevice = getActualSelectedDevice();
+        const selectedDevice = getActualSelectedDevice(true);
         if (selectedDevice && selectedDevice !== 'local') {
             const currentSec = timeStringToSeconds(data.current);
             const totalSec = timeStringToSeconds(data.total);
@@ -1583,5 +1583,36 @@ function customConfirm(messageText) {
         btnCancel.addEventListener('click', onCancel);
         btnOk.addEventListener('click', onOk);
         overlay.addEventListener('click', onCancel);
+    });
+}
+
+// ======================================
+// --- Custom Alert Modal Logic ---
+// ======================================
+function customAlert(messageText) {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('custom-alert-overlay');
+        const modal = document.getElementById('custom-alert-modal');
+        const messageEl = document.getElementById('custom-alert-message');
+        const btnOk = document.getElementById('custom-alert-ok');
+
+        messageEl.textContent = messageText;
+        overlay.classList.add('active');
+        modal.classList.add('open');
+
+        function cleanup() {
+            overlay.classList.remove('active');
+            modal.classList.remove('open');
+            btnOk.removeEventListener('click', onOk);
+            overlay.removeEventListener('click', onOk);
+        }
+
+        function onOk() {
+            cleanup();
+            resolve();
+        }
+
+        btnOk.addEventListener('click', onOk);
+        overlay.addEventListener('click', onOk);
     });
 }

@@ -518,8 +518,13 @@ ipcMain.handle('sonos:play', async (event, { host, filePath }) => {
     const trackUrl = `${localServerUrl}/audio/${streamId}${extension}`;
 
     console.log(`Playing on Sonos (${host}):`, trackUrl);
-    await sonosPlayer.SetAVTransportURI(trackUrl);
-    await sonosPlayer.Play();
+
+    const timeoutMsg = 'Connection timed out. Ensure the IP address is correct and the speaker is online.';
+    await Promise.race([
+      sonosPlayer.SetAVTransportURI(trackUrl).then(() => sonosPlayer.Play()),
+      new Promise((_, reject) => setTimeout(() => reject(new Error(timeoutMsg)), 5000))
+    ]);
+
     startSonosPolling(event, sonosPlayer);
     return { success: true };
   } catch (error) {
@@ -536,8 +541,13 @@ ipcMain.handle('sonos:playYt', async (event, { host }) => {
     const trackUrl = `${localServerUrl}/yt-stream.mp3`;
 
     console.log(`Playing YouTube Stream on Sonos (${host}):`, trackUrl);
-    await sonosPlayer.SetAVTransportURI(trackUrl);
-    await sonosPlayer.Play();
+
+    const timeoutMsg = 'Connection timed out. Ensure the IP address is correct and the speaker is online.';
+    await Promise.race([
+      sonosPlayer.SetAVTransportURI(trackUrl).then(() => sonosPlayer.Play()),
+      new Promise((_, reject) => setTimeout(() => reject(new Error(timeoutMsg)), 5000))
+    ]);
+
     startSonosPolling(event, sonosPlayer);
     return { success: true };
   } catch (error) {
