@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2] - 2026-03-07
+
+### Fixed
+- Fixed an issue where casting YouTube Music streams to Sonos would fail with an "encoding error" due to Sonos blocking chunked HTTP transfers, by forcing the connection to use the `x-rincon-mp3radio://` protocol.
+- Forced `Express` to immediately flush 200 OK headers for live streams to prevent the backend from triggering the new 5-second `play()` timeout.
+
 ## [1.0.1] - 2026-03-07
 
 ### Added

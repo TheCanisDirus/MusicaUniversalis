@@ -209,6 +209,7 @@ function startLocalServer() {
 
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Transfer-Encoding', 'chunked');
+    res.flushHeaders(); // MUST be called so Sonos SetAVTransportURI doesn't time out waiting for headers
 
     console.log('[Express] Piping FFmpeg MP3 output to Sonos HTTP response...');
     ytMp3Stream.pipe(res);
@@ -538,7 +539,9 @@ ipcMain.handle('sonos:playYt', async (event, { host }) => {
   try {
     const { SonosDevice } = require('@svrooij/sonos');
     const sonosPlayer = new SonosDevice(host);
-    const trackUrl = `${localServerUrl}/yt-stream.mp3`;
+
+    // Explicitly use x-rincon-mp3radio so Sonos doesn't fail on chunked encoding streams
+    const trackUrl = `${localServerUrl}/yt-stream.mp3`.replace('http://', 'x-rincon-mp3radio://');
 
     console.log(`Playing YouTube Stream on Sonos (${host}):`, trackUrl);
 
