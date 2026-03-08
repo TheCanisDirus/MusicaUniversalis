@@ -10,6 +10,8 @@
 
 **Musica Universalis** is a feature-rich desktop music application built with Electron. Designed for audio enthusiasts, it seamlessy bridges the gap between your local, high-fidelity audio library and modern streaming services, all while integrating flawlessly with the Sonos ecosystem. The entire point of this project is my deep hatred for the SONOS software. Great hardware. Hate the software. I'm sure no one has seen that before.
 
+The UI design pulls from YouTube Music and WinAmp as a combination of the two fits my design enjoyment. 
+
 ## ✨ Key Features
 
 - **High-Fidelity Local Playback:** Effortlessly scan, organize, and play your local `.mp3` and `.flac` libraries with full ID3 metadata support, embedded album art extraction, and gapless playback.
